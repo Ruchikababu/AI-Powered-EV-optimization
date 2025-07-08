@@ -1,0 +1,180 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an Electric Vehicle Battery Advisor.\n\nWhen a user submits their battery percentage and location, generate a natural-sounding 5-line voice message.\n\nOnly speak the final output. Do not say any instructions, line numbers, or formatting hints.\n\nDetails:\nBattery Level: {{ $('On form submission').item.json.battery }}%\nLocation: {{ $('On form submission').item.json.location }}\n\nNearby charging stations:\n1. Ola Supercharger – Sathy Road, Gandhipuram\n2. Zeon Charging – RS Puram\n3. EV Fast Charge Hub – Peelamedu\n\nAssume:\n- If location includes “Coimbatore”, weather is sunny and 32°C.\n- Otherwise, weather is moderately cloudy and 28°C.\n\nEstimate travel range: battery % × 1.5 kilometers\n\nYour message should include:\n- A warning if battery < 30%\n- Battery %, travel range\n- Weather\n- 2 nearest charging stations (name + short address)\n- End with “Drive safely!”",
+        "options": {
+          "systemMessage": "You are a helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        620,
+        -60
+      ],
+      "id": "b952c7b0-55db-4625-a061-b233df00dd4e",
+      "name": "AI Agent",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "formTitle": "battery status form",
+        "formDescription": "please enter your battery level",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "battery",
+              "fieldType": "number",
+              "placeholder": "80",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "location",
+              "placeholder": "chennai",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        420,
+        -60
+      ],
+      "id": "9aceae79-06ae-4e46-b062-8b07f5a93f73",
+      "name": "On form submission",
+      "webhookId": "4dc4d999-8051-4139-a18c-ea77c323ba0a"
+    },
+    {
+      "parameters": {
+        "resource": "call",
+        "from": "19893423763",
+        "to": "+916379118254",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        -60
+      ],
+      "id": "d32f7e9c-ec80-4aff-a948-83b9b1776ee7",
+      "name": "Make a call",
+      "credentials": {
+        "twilioApi": {
+          "id": "FH5yIh34vOGfG4aa",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        620,
+        120
+      ],
+      "id": "6b04a92b-ee08-40a1-b0d0-eb8a0b3d0e55",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "JZWl6WBMU8rPUMuT",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "rajasri.r.cse.2023@snsce.ac.in",
+        "subject": "low battery alert",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        920,
+        100
+      ],
+      "id": "12bec63a-0acd-43b9-a0aa-d325eed822f4",
+      "name": "Send a message",
+      "webhookId": "fbf1ad15-876e-47d6-b169-b2b2cc35a412",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Uw7hvdv6NvL5w1Cg",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Make a call",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make a call": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "301c41d9-101f-44a2-bc31-11ace333b350",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d2059035bcad15d44b28e07931e92f9b05e079e988fdfbdc0634a9a7129d6045"
+  },
+  "id": "cxHRLMuFMYzK3VWB",
+  "tags": []
+}
